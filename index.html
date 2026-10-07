@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vessel Monitoring System</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#07111f;color:#eef6ff}
+header{padding:18px 16px;background:#0d2035;border-bottom:1px solid #23405d}
+h1{margin:0;font-size:22px}header p{margin:5px 0 0;color:#9fc0dd;font-size:13px}
+main{max-width:900px;margin:auto;padding:16px}.card{background:#0d1c2d;border:1px solid #25445f;border-radius:14px;padding:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.metric{background:#081523;border-radius:12px;padding:15px}.label{font-size:12px;color:#8eabc3}.value{font-size:27px;font-weight:700;margin-top:6px}
+.status{display:inline-flex;align-items:center;gap:8px;color:#7ee2a8;font-weight:700}.dot{width:10px;height:10px;border-radius:50%;background:#39d77d}
+.compass{width:190px;height:190px;border:3px solid #47718f;border-radius:50%;margin:10px auto;position:relative;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#132b40 0 3px,transparent 4px)}
+.compass:before{content:"N";position:absolute;top:8px;font-weight:bold}.compass:after{content:"S";position:absolute;bottom:8px;color:#9fc0dd}
+.east,.west{position:absolute;color:#9fc0dd;font-weight:bold}.east{right:10px}.west{left:10px}
+.arrow{width:5px;height:72px;background:#ff6464;position:absolute;transform-origin:50% 90%;bottom:50%;left:calc(50% - 2.5px);border-radius:5px}
+.arrow span{position:absolute;top:-8px;left:-5px;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:14px solid #ff6464}
+input{width:100%;padding:12px;border-radius:9px;border:1px solid #355875;background:#07111f;color:white;font-size:16px}
+button{width:100%;padding:13px;border:0;border-radius:9px;background:#1d8cff;color:white;font-weight:bold;font-size:16px;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:9px;border-bottom:1px solid #24405a}th{color:#9fc0dd}
+.note{font-size:12px;color:#91abc1;line-height:1.5}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+<h1>🚢 Vessel Monitoring System</h1>
+<p>Position monitoring dashboard • North / East coordinates</p>
+</header>
+<main>
+<div class="card">
+<div class="status"><span class="dot"></span> SYSTEM ONLINE</div>
+<p class="note">Demo dashboard. Enter the vessel's current coordinates below. This page does not automatically receive GPS data unless a GPS/device feed is connected.</p>
+</div>
+
+<div class="card">
+<h3>Current Position</h3>
+<div class="grid">
+<div class="metric"><div class="label">LATITUDE — NORTH / SOUTH</div><div class="value" id="lat">13.1394° N</div></div>
+<div class="metric"><div class="label">LONGITUDE — EAST / WEST</div><div class="value" id="lon">123.7349° E</div></div>
+</div>
+</div>
+
+<div class="card">
+<h3>Direction</h3>
+<div class="compass"><div class="east">E</div><div class="west">W</div><div class="arrow" id="arrow"><span></span></div><b id="heading">090° E</b></div>
+<div class="grid">
+<div><div class="label">HEADING</div><div class="value" id="headValue">090°</div></div>
+<div><div class="label">SPEED</div><div class="value" id="speedValue">0 kn</div></div>
+</div>
+</div>
+
+<div class="card">
+<h3>Update Vessel Position</h3>
+<div class="grid">
+<div><label class="label">Latitude</label><input id="latIn" type="number" step="0.000001" value="13.1394"></div>
+<div><label class="label">Longitude</label><input id="lonIn" type="number" step="0.000001" value="123.7349"></div>
+<div><label class="label">Heading (0–359°)</label><input id="headIn" type="number" min="0" max="359" value="90"></div>
+<div><label class="label">Speed (knots)</label><input id="speedIn" type="number" min="0" step="0.1" value="0"></div>
+</div>
+<button onclick="updateVessel()">UPDATE POSITION</button>
+</div>
+
+<div class="card">
+<h3>Position Log</h3>
+<table><thead><tr><th>Time</th><th>Latitude</th><th>Longitude</th><th>Heading</th><th>Speed</th></tr></thead>
+<tbody id="log"></tbody></table>
+</div>
+
+<div class="card">
+<p class="note"><b>Important:</b> This is the working web dashboard/demo. For true live vessel tracking, we can next connect it to a GPS tracker, phone GPS, or a server/API so the North and East position updates automatically.</p>
+</div>
+</main>
+<script>
+const logEl=document.getElementById("log");
+function updateVessel(){
+ const lat=parseFloat(document.getElementById("latIn").value);
+ const lon=parseFloat(document.getElementById("lonIn").value);
+ let h=parseFloat(document.getElementById("headIn").value)||0;
+ const s=parseFloat(document.getElementById("speedIn").value)||0;
+ if(Number.isNaN(lat)||Number.isNaN(lon)) return;
+ document.getElementById("lat").textContent=Math.abs(lat).toFixed(6)+"° "+(lat>=0?"N":"S");
+ document.getElementById("lon").textContent=Math.abs(lon).toFixed(6)+"° "+(lon>=0?"E":"W");
+ document.getElementById("headValue").textContent=String(Math.round(h)).padStart(3,"0")+"°";
+ document.getElementById("speedValue").textContent=s.toFixed(1)+" kn";
+ const dirs=["N","NE","E","SE","S","SW","W","NW"];
+ const d=dirs[Math.round(h/45)%8];
+ document.getElementById("heading").textContent=String(Math.round(h)).padStart(3,"0")+"° "+d;
+ document.getElementById("arrow").style.transform=`rotate(${h}deg)`;
+ const tr=document.createElement("tr");
+ tr.innerHTML=`<td>${new Date().toLocaleTimeString()}</td><td>${lat.toFixed(6)}° ${lat>=0?"N":"S"}</td><td>${lon.toFixed(6)}° ${lon>=0?"E":"W"}</td><td>${String(Math.round(h)).padStart(3,"0")}° ${d}</td><td>${s.toFixed(1)} kn</td>`;
+ logEl.prepend(tr);
+ if(logEl.children.length>10) logEl.lastElementChild.remove();
+}
+updateVessel();
+</script>
+</body>
+</html>
